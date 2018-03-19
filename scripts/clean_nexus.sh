@@ -8,9 +8,9 @@ function getNextPage() {
 
 	if [ -z $continuationToken ]
 	then
-		json=$(curl -s -X GET --header 'Accept: application/json' 'http://ast-nexus:8081/service/siesta/rest/v1/assets?repositoryId=nuget-hosted')
+		json=$(curl -s -X GET --header 'Accept: application/json' '$NEXUS_BASE_URL/service/siesta/rest/v1/assets?repositoryId=nuget-hosted')
 	else
-		json=$(curl -s -X GET --header 'Accept: application/json' "http://ast-nexus:8081/service/siesta/rest/v1/assets?repositoryId=nuget-hosted&continuationToken=$continuationToken")
+		json=$(curl -s -X GET --header 'Accept: application/json' "$NEXUS_BASE_URL/service/siesta/rest/v1/assets?repositoryId=nuget-hosted&continuationToken=$continuationToken")
 	fi
 	
 	packagesString=$(echo "$json" | grep coordinates | cut -d '"' -f 4 | sed 's/\n/ /g')
@@ -25,8 +25,8 @@ function getNextPage() {
 function deletePackage() {
 	package=$1
 	
-	echo "Deleting package $package on url: http://ast-nexus:8081/repository/nuget-hosted/$package"
-	curl -s -X DELETE -u admin:admin123 "http://ast-nexus:8081/repository/nuget-hosted/$package"
+	echo "Deleting package $package on url: $NEXUS_BASE_URL/repository/nuget-hosted/$package"
+	curl -s -X DELETE -u admin:admin123 "$NEXUS_BASE_URL/repository/nuget-hosted/$package"
 }
 
 
