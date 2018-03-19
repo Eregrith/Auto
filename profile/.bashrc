@@ -1,5 +1,5 @@
 #!/bin/sh
-GIT_REPOS_DIR="REPLACE_ME"
+export GIT_REPOS_DIR="REPLACE_ME"
 source ~/.auto.git.config
 # YOUR OWN CONFIG UNDER THIS LINE
 
