@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# Post-merge script to prevent
+# 	- Non-rebased branches to be merged to develop
+#	- Merges to master from any branch other than release/ and hotfix/
+#	- Merges of integration to any branch
+# 
+
+function reset_merge {
+	git reset HEAD~
+	echo "Votre merge a été annulé avec git reset HEAD~ (soft)"
+	echo ""
+	echo "Je vous conseille de procéder au netoyage des modifications apportées"
+	echo "			git checkout ."
+	echo "			git clean -d -f"
+	echo ""
+}
+
+branch_name=$(git branch | grep "*" | sed "s/\* //")
+merged_branch_name=$(echo $GIT_REFLOG_ACTION | cut -d" " -f 2)
+
+echo "Execution du hook post-merge"
+
+echo "Il semblerait que vous venez de merge la branche $merged_branch_name vers $branch_name"
+
+if [ "$branch_name" != "develop" ]
+then
+	if [ "$branch_name" = "master" ]
+	then
+		if [ "${merged_branch_name:0:8}" != "release/" && "${merged_branch_name:0:7}" != "hotfix/" ]
+		then
+			echo "Vous tentez de merger $merged_branch_name vers master !?"
+			echo "Cela a l'air tres suspect ! Si vous etes certains de ce que vous faites,"
+			echo "vous pouvez merge en bypassant ce check."
+			echo ""
+
+			reset_merge
+		
+			exit 1
+		fi
+	fi
+	echo "Aucun check à faire."
+	echo "Merge validé"
+	exit 0
+elif [ "$merged_branch_name" = "master" ]
+then
+	echo "Merge de master dans develop"
+	echo "Aucun check à faire."
+	echo "Merge validé"
+	exit 0
+fi
+
+if [ "$merged_branch_name" = "integration" ]
+then
+	echo "Il est interdit de merge integration"
+	echo ""
+
+	reset_merge
+
+	exit 1
+fi
+
+merged_on_commit=$(git rev-parse HEAD^)
+
+echo ""
+echo "Recuperation de la base de merge"
+
+merge_base=$(git merge-base HEAD^1 HEAD^2)
+
+echo ""
+echo "Votre branche $merged_branch_name part de $branch_name"
+echo "	depuis le commit	${merge_base:0:7}"
+echo "Le merge fait suite au commit	${merged_on_commit:0:7}"
+echo ""
+
+# si le commit de base du merge est le commit initial, on ne peut pas référer à son parent par $merge_base^
+if [ $merge_base = $(git rev-list --max-parents=0 HEAD) ]
+then
+	git log --graph --oneline --decorate --pretty=format:'%C(auto)%h %d' 
+else
+	git log --graph --oneline --decorate --pretty=format:'%C(auto)%h %d' $merge_base^...
+fi
+
+echo ""
+
+if [ "$merge_base" != "$merged_on_commit" ]
+then
+	echo "Ces commits ne sont pas les mêmes."
+	echo "Votre branche n'a pas l'air d'avoir été rebased sur $branch_name"
+	echo "Vous devez absolument rebase votre branche sur $branch_name avant de la merge"
+	echo ""
+	echo "			git rebase $branch_name"
+	echo ""
+
+	reset_merge
+
+	exit 1
+else
+	echo "Votre branche a l'air d'avoir été correctement rebased sur $branch_name"
+	echo ""
+	echo "Merge validé"
+	exit 0
+fi

@@ -1,0 +1,74 @@
+#!/bin/sh
+
+source ~/.colors
+
+echo "Executing pre-push hook to check for forbidden package versions"
+echo
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+function check_packages_for_forbidden_parts() {
+
+  forbidden_parts=$1
+  accepted_parts=$2
+  error=0
+  
+  for conf in **/packages.config; do
+	
+    lines=$(cat $conf | grep -E -- "$forbidden_parts" | grep -v -E -- "$accepted_parts" )
+
+    if [ $? -eq 0 ]; then
+      packages=$(echo $lines | cut -d \" --fields 2,4 | sed "s/^/${LGREEN}/g" | sed "s/\"/${RESTORE} -> ${LRED}/g" | sed "s/$/${RESTORE}/g")
+	  error=1
+	  echo "${WHITE}$conf${WHITE}:"
+      echo -e "\t\t\t" $packages
+    fi
+  done
+  
+  if [ $error -eq 1 ]; then
+    echo $LRED
+    echo "There are forbidden packages versions in your projects"
+    echo "Please update your packages to be adequate with the current branch $BRANCH"
+	echo $RESTORE
+    exit 1
+  fi
+
+}
+
+ignored_strings="utf-8|ClientDependency-Mvc5|jasmine-js|ng-file-upload.TypeScript.DefinitelyTyped|TypeLite|kendo-ui.TypeScript.DefinitelyTyped"
+
+if [ "$BRANCH" == "master" ]; then
+  
+  #No pre-release package should be in master
+  #Detecting the dash '-' constituting a prerelease version is probably enough 
+  check_packages_for_forbidden_parts "-" "$ignored_strings"
+
+fi
+
+if [ "$BRANCH" == "develop" ]; then
+
+  #No package other than stable and "-unstable" should be in develop either
+  check_packages_for_forbidden_parts "-" "-unstable|$ignored_strings"
+
+fi
+
+if [ "$BRANCH" == "integration" ]; then
+
+  #No package other than -integration, stable or -unstable should be in integration
+  check_packages_for_forbidden_parts "-" "-unstable|-integration|$ignored_strings"
+
+fi
+
+if [ "${BRANCH:0:8}" == "release/" ]; then
+
+  #No package other than -release, stable or -unstable should be in integration
+  check_packages_for_forbidden_parts "-" "-release|$ignored_strings"
+
+fi
+
+if [ "${BRANCH:0:8}" == "feature/" -o "${BRANCH:0:5}" == "tech/" ]; then
+
+  #No package in "-integration" should be in feature/* or tech/*
+  check_packages_for_forbidden_parts "-integration" "nothing_else"
+
+fi
