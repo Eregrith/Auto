@@ -39,4 +39,5 @@ echo "                                                                     "
 lsfull
 
 echo
+echo "If you feel lost you can type: sos"
 echo
