@@ -3,6 +3,7 @@
 ./lib/profile.sh
 ./lib/gitversion.sh
 ./lib/config.sh
+./lib/nuget.sh
 #./lib/clone.sh
 #./lib/install_hooks.sh
 
