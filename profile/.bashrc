@@ -1,5 +1,6 @@
 #!/bin/sh
 GIT_REPOS_DIR="REPLACE_ME"
+source ~/.auto.git.config
 # YOUR OWN CONFIG UNDER THIS LINE
 
 
@@ -23,6 +24,7 @@ if [ $? -eq 0 ]; then
 		git checkout master >/dev/null
 		git pull >/dev/null
 		./lib/update_auto_git_config.sh
+		source ~/.auto.git.config
 	fi
 fi
 cd ..
