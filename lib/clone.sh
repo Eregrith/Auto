@@ -5,7 +5,7 @@ REPO_FILE="lib/repos.sh"
 
 source $REPO_FILE
 
-echo "Cloning all AST repositories into $GIT_DIR"
+echo "Cloning all declared repositories into $GIT_DIR"
 
 wd=$(pwd)
 
