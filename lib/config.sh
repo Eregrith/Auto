@@ -6,7 +6,7 @@ RESTORE="\033[0m"
 echo "Starting main global config of git..."
 echo 
 echo "When pulling, rebase instead of merge"
-git config --global pull.rebase preserve
+git config --global pull.rebase merges
 echo 
 echo "Disabling merge fast-forward by default"
 git config --global merge.ff false
